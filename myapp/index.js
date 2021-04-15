@@ -8,7 +8,8 @@ app.use(express.json());//Adding middleware
 const courses = [
   {id:1, name:'course1'},
   {id:2, name:'course2'},
-  {id:3, name:'course3'}
+  {id:3, name:'course3'},
+  {id:4, name:'course4'}
 ];
 app.get('/',(req, res)=>
 {
@@ -43,20 +44,12 @@ app.get('/api/courses/:id',(req,res)=>
 });
 //-------------------------------------------------------------------------------------------
 app.post('/api/courses', (req, res)=>{
-  const schema = {
-    name: Joi.string().min(3).required()
-  };
 
-  const result = Joi.validate(req.body, schema);
+  const { error} = validateCourse(req.body);
+    if(error) return  res.status(400).send(result.error.details[0].message);
 
-  if(result.error){
-    //400 Bad Request
-    res.status(400).send(result.error.details[0].message);
-    return;
-  }
 /*
   console.log(result);
-
   if(!req.body.name || req.body.name.length < 3){
     //400 Bad Request
     res.status(400).send('Name is required and should be minimum 3 characters.')
@@ -70,12 +63,49 @@ app.post('/api/courses', (req, res)=>{
   res.send(course);
 });//now we ll do it using JOI
 
+//-----------------------------------------------------------------------------------------------
+app.put('/api/courses/:id', (req, res)=>{
+  //look up the course
+  //If not existing, return 404
+  const course = courses.find(c => c.id === parseInt(req.params.id));
+  if(!course) return res.status(404).send('The course with given is not found');//404
 
 
-app.put
+const { error} = validateCourse(req.body);
+  if(error) return res.status(400).send(result.error.details[0].message);
+
+  //update course
+  //Return the updated course
+  course.name = req.body.name;
+  res.send(course);
 
 
+});
 
+function validateCourse(course){
+  const schema = {
+    name: Joi.string().min(3).required()
+  };
+
+  return Joi.validate(course, schema);
+}
+
+
+//-----------------------------------------------------------------------------------------
+
+app.delete('/api/courses/:id',(req,res)=>{
+  //look up the course
+  //not existing, return 404
+  const course = courses.find(c => c.id === parseInt(req.params.id));
+  if(!course) res.status(404).send('The course with given is not found');//404
+
+  //delete
+const index = courses.indexOf(course);
+courses.splice(index, 1);
+
+res.send(course);
+  //return same course
+})
 
 
 
